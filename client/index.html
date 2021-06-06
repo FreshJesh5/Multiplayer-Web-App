@@ -40,7 +40,18 @@
       <div id="gameScreen" class="h-100">
         <div class="d-flex flex-column align-items-center justify-content-center h-100">
           <h1>Your game code is: <span id="gameCodeDisplay"></span></h1>
+          <div class="d-flex flex row">
+            <p>Your player color is: </p>
+            <div class="ml-1 color-box" id="colorBox"></div>
+          </div>
           <canvas id="canvas"></canvas>
+          <button
+            type="submit"
+            class="mt-2 btn btn-success"
+            id="startGameButton"
+          >
+            Start Game
+          </button>
         </div>
       </div>
 

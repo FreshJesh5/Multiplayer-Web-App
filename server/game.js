@@ -1,51 +1,69 @@
-const {GRID_SIZE} = require('./constants');
+const { GRID_SIZE } = require('./constants');
 
 module.exports = {
     initGame,
     gameLoop,
-    getUpdatedVelocity
+    getUpdatedVelocity,
+    createGameState
 }
 
-function initGame() {
-    const state = createGameState();
+function initGame(numClients) {
+    const state = createGameState(numClients);
     randomFood(state);
     return state;
 }
 
-function createGameState() {
+function createPlayers(numPlayers) {
+    var middle = GRID_SIZE / 2;
+    var arr = [
+        {
+            pos: { x: 2 , y: middle },
+            vel: { x: 0, y: 0 },
+            snake: [
+                {x: 0, y: middle},
+                {x: 1, y: middle},
+                {x: 2, y: middle}
+            ]
+        },
+        {
+            pos: { x: 17, y: middle },
+            vel: { x: 0, y: 0 },
+            snake: [
+                {x: 19, y: middle},
+                {x: 18, y: middle},
+                {x: 17, y: middle}
+            ]
+        },
+        {
+            pos: { x: middle, y: 2  },
+            vel: { x: 0, y: 0 },
+            snake: [
+                {x: middle, y: 0},
+                {x: middle, y: 1},
+                {x: middle, y: 2}
+            ]
+        },
+        {
+            pos: { x: middle, y: 17 },
+            vel: { x: 0, y: 0 },
+            snake: [
+                {x: middle, y: 19},
+                {x: middle, y: 18},
+                {x: middle, y: 17}
+            ]
+        }
+    ];
+    arr = arr.slice(0,numPlayers);
+    return arr;
+}
+
+function createGameState(numPlayers) {
     return {
-        players: [{
-            pos: {
-                x: 3,
-                y: 10
-            },
-            vel: {
-                x: 0,
-                y: 0
-            },
-            snake: [
-                {x: 1, y: 10},
-                {x: 2, y: 10},
-                {x: 3, y: 10}
-            ]
-        }, {
-            pos: {
-                x: 18,
-                y: 10
-            },
-            vel: {
-                x: 0,
-                y: 0
-            },
-            snake: [
-                {x: 20, y: 10},
-                {x: 19, y: 10},
-                {x: 18, y: 10}
-            ]
-        }],
+        players: createPlayers(numPlayers),
         food: {},
         gridsize: GRID_SIZE,
-        active: true
+        active: true,
+        numPlayers: numPlayers
     };
 }
 
@@ -53,56 +71,38 @@ function gameLoop(state) {
     if (!state) {
         return;
     }
-    const playerOne = state.players[0];
-    const playerTwo = state.players[1];
 
-    //update position
-    playerOne.pos.x += playerOne.vel.x;
-    playerOne.pos.y += playerOne.vel.y;
+    let foodEaten = false;
 
-    playerTwo.pos.x += playerTwo.vel.x;
-    playerTwo.pos.y += playerTwo.vel.y;
-
-    //border collision check
-    if (playerOne.pos.x < 0 || playerOne.pos.x > GRID_SIZE ||
-        playerOne.pos.y < 0 || playerOne.pos.y > GRID_SIZE) {
-        console.log('player1 OOB');
-        return 2;
-    }
-    if (playerTwo.pos.x < 0 || playerTwo.pos.x > GRID_SIZE ||
-        playerTwo.pos.y < 0 || playerTwo.pos.y > GRID_SIZE) {
-        console.log('player2 OOB');
-        return 1;
-    }
-    //self collision check
-    for (let c of playerOne.snake.slice(1,-1)) {
-        if (c.x === playerOne.pos.x && c.y === playerOne.pos.y) {
-            console.log('player1 self collide');
+    for (var i = 0; i < state.numPlayers; i++) {
+        const player = state.players[i];
+        if (!player) {
+            throw "Player " + i + " is null";
+        }
+        //update position
+        player.pos.x += player.vel.x;
+        player.pos.y += player.vel.y;
+        //border collision check
+        if (player.pos.x < 0 || player.pos.x >= GRID_SIZE ||
+            player.pos.y < 0 || player.pos.y >= GRID_SIZE) {
+            //console.log('player1 OOB');
             return 2;
         }
-    }
-    for (let c of playerTwo.snake.slice(1,-1)) {
-        if (c.x === playerTwo.pos.x && c.y === playerTwo.pos.y) {
-            console.log('player2 self collide');
-            return 1;
+        //self collision check
+        for (let c of player.snake.slice(1,-1)) {
+            if (c.x === player.pos.x && c.y === player.pos.y) {
+                //console.log('player1 self collide');
+                return 2;
+            }
         }
-    }
-    //food check and update body movement
-    let foodEaten = false;
-    if (state.food.x === playerOne.pos.x && state.food.y === playerOne.pos.y) {
-        foodEaten = true;
-        playerOne.snake.push({...playerOne.pos});
-    } else if (playerOne.vel.x || playerOne.vel.y) { //update body movement
-        playerOne.snake.push({...playerOne.pos});
-        playerOne.snake.shift();
-    }
-
-    if (state.food.x === playerTwo.pos.x && state.food.y === playerTwo.pos.y) {
-        foodEaten = true;
-        playerTwo.snake.push({...playerTwo.pos});
-    } else if (playerTwo.vel.x || playerTwo.vel.y) { //update body movement
-        playerTwo.snake.push({...playerTwo.pos});
-        playerTwo.snake.shift();
+        //food check and update body movement
+        if (state.food.x === player.pos.x && state.food.y === player.pos.y) {
+            foodEaten = true;
+            player.snake.push({...player.pos});
+        } else if (player.vel.x || player.vel.y) { //update body movement
+            player.snake.push({...player.pos});
+            player.snake.shift();
+        }
     }
 
     //randomly generate food if eaten
@@ -116,16 +116,12 @@ function randomFood(state) {
         x: Math.floor(Math.random() * GRID_SIZE),
         y: Math.floor(Math.random() * GRID_SIZE)
     }
-
-    for (let c of state.players[0].snake) {
-        if (c.x === food.x && c.y === food.y) {
-            return randomFood(state);
-        }
-    }
-
-    for (let c of state.players[1 ].snake) {
-        if (c.x === food.x && c.y === food.y) {
-            return randomFood(state);
+    //food and player overlap check
+    for (var i = 0; i < state.numPlayers; i++) {
+        for (let c of state.players[i].snake) {
+            if (c.x === food.x && c.y === food.y) {
+                return randomFood(state);
+            }
         }
     }
 
@@ -145,6 +141,9 @@ function getUpdatedVelocity(keycode) {
         }
         case 40: { //up
             return {x: 0, y: 1};
+        }
+        case 80: { //p
+            return {x: 0, y: 0};
         }
     }
 }
