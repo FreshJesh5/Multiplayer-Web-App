@@ -1,17 +1,43 @@
+//const httpServer = require("http").createServer();
 const PORT = process.env.PORT || 3000;
-const httpServer = require("http").createServer();
-const io = require('socket.io')(httpServer, {
+const INDEX = '/../client/index.html';
+
+const path = require('path');
+const clientFile = path.resolve(__dirname + '/../client/index.html');
+const express = require('express');
+const app = express();
+// const server = express()
+//   .use((req, res) => res.sendFile(clientFile))
+//   .listen(PORT, () => console.log(`Listening on ${PORT}`));
+
+app.get('/', (_req, res) => {
+    res.sendFile(path.resolve(__dirname + '/../client/index.html'));
+});
+
+app.get('/index.js', (_req, res) => {
+    res.sendFile(path.resolve(__dirname + '/../client/index.js'));
+});
+
+const server = app.listen(PORT, () => console.log(`Listening on ${PORT}`));
+
+const io = require('socket.io')(server, {
     cors: {
       origin: "*",
       credentials: true
     }
 });
+
+
+
 const { initGame, gameLoop, getUpdatedVelocity, createGameState } = require('./game');
 const { FRAME_RATE, MAX_PLAYERS } = require('./constants');
 const { makeid } = require('./utils');
 
+
 const state = {};
 const clientRooms = {};
+
+
 
 io.on('connection', client => {
     client.on('keydown', handleKeydown);
@@ -136,4 +162,4 @@ function emitGameOver(room, winner) {
 }
 
 
-httpServer.listen(PORT);
+//httpServer.listen(PORT);
