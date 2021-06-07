@@ -2,7 +2,7 @@ const BG_COLOR = '#231f20';
 const SNAKE_COLOR = ['yellow', 'red', 'green', 'blue'];
 const FOOD_COLOR = '#e66916';
 
-const socket = io('http://localhost:3000');
+const socket = io();
 
 socket.on('init', handleInit);
 socket.on('gameState', handleGameState);
