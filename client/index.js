@@ -11,8 +11,9 @@ socket.on('gameCode', handleGameCode);
 socket.on('unknownCode', handleUnknownCode);
 socket.on('tooManyPlayers', handleTooManyPlayers);
 socket.on('gameInSession', handleGameInSession);
-socket.on('gameActive', handleGameActive);
+socket.on('allowDrawCanvas', handleAllowDrawCanvas);
 socket.on('gameStart', handleGameStart);
+socket.on('playerDisconnected', handlePlayerDisconnected);
 
 const gameScreen = document.querySelector('#gameScreen');
 const initialScreen = document.querySelector('#initialScreen');
@@ -31,7 +32,7 @@ let canvas, ctx;
 let playerNumber;
 let numPlayers;
 let roomName;
-let gameActive = false;
+let allowDrawCanvas = false;
 
 function newGame() {
     socket.emit('newGame');
@@ -70,10 +71,10 @@ function init() {
 }
 
 //gameActive bool for whether canvas can be drawn on
-function handleGameActive(numClients) {
+function handleAllowDrawCanvas(numClients) {
     numPlayers = numClients;
     console.log(numPlayers);
-    gameActive = true;
+    allowDrawCanvas = true;
 }
 
 function handleGameStart() {
@@ -122,7 +123,7 @@ function handleInit(number) {
 }
 
 function handleGameState(gameState) {
-    if (!gameActive) {
+    if (!allowDrawCanvas) {
         return;
     }
     gameState = JSON.parse(gameState);
@@ -131,11 +132,11 @@ function handleGameState(gameState) {
 
 
 function handleGameOver(data) {
-    if (!gameActive) {
+    if (!allowDrawCanvas) {
         return;
     }
     data = JSON.parse(data);
-    gameActive = false;
+    allowDrawCanvas = false;
     if (data.winner == playerNumber) {
         alert("You win :)");
     } else {
@@ -157,6 +158,11 @@ function handleUnknownCode() {
 function handleTooManyPlayers() {
     reset();
     alert('This game room is full');
+}
+
+function handlePlayerDisconnected() {
+    alert('A player has disconnected. Returning to lobby.');
+    reset();
 }
 
 function handleGameInSession() {

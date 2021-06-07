@@ -3,7 +3,7 @@ const { GRID_SIZE } = require('./constants');
 module.exports = {
     initGame,
     gameLoop,
-    getUpdatedVelocity,
+    updateVelocity,
     createGameState
 }
 
@@ -19,6 +19,7 @@ function createPlayers(numPlayers) {
         {
             pos: { x: 2 , y: middle },
             vel: { x: 0, y: 0 },
+            lastVel: { x: 1, y: 0 },
             snake: [
                 {x: 0, y: middle},
                 {x: 1, y: middle},
@@ -29,6 +30,7 @@ function createPlayers(numPlayers) {
         {
             pos: { x: 17, y: middle },
             vel: { x: 0, y: 0 },
+            lastVel: { x: -1, y: 0 },
             snake: [
                 {x: 19, y: middle},
                 {x: 18, y: middle},
@@ -39,6 +41,7 @@ function createPlayers(numPlayers) {
         {
             pos: { x: middle, y: 2  },
             vel: { x: 0, y: 0 },
+            lastVel: { x: 0, y: 1 },
             snake: [
                 {x: middle, y: 0},
                 {x: middle, y: 1},
@@ -49,6 +52,7 @@ function createPlayers(numPlayers) {
         {
             pos: { x: middle, y: 17 },
             vel: { x: 0, y: 0 },
+            lastVel: { x: 0, y: -1 },
             snake: [
                 {x: middle, y: 19},
                 {x: middle, y: 18},
@@ -160,26 +164,44 @@ function randomFood(state) {
     state.food = food;
 }
 
-function getUpdatedVelocity(keycode, player) {
+function updateVelocity(keycode, player, playerNumber) {
+    if (!player.alive) return;
+
     switch (keycode) {
-        case 37: { //left
-            if (player.vel.x == 1 && player.vel.y == 0) return;
-            return {x: -1, y: 0};
+        case 37: { 
+            //console.log("left");
+            if (player.lastVel.x == 1 && player.lastVel.y == 0) return;
+            player.vel = {x: -1, y: 0};
+            player.lastVel = player.vel;
+            break;
         }
-        case 38: { //down
-            if (player.vel.x == 0 && player.vel.y == 1) return;
-            return {x: 0, y: -1};
+        case 38: {
+            //console.log("up");
+            if (player.lastVel.x == 0 && player.lastVel.y == 1) return;
+            player.vel = {x: 0, y: -1};
+            player.lastVel = player.vel;
+            break;
         }
-        case 39: { //right
-            if (player.vel.x == -1 && player.vel.y == 0) return;
-            return {x: 1, y: 0};
+        case 39: {
+            //console.log("right");
+            if (player.lastVel.x == -1 && player.lastVel.y == 0) return;
+            player.vel = {x: 1, y: 0};
+            player.lastVel = player.vel;
+            break;
         }
-        case 40: { //up
-            if (player.vel.x == 0 && player.vel.y == -1) return;
-            return {x: 0, y: 1};
+        case 40: {
+            //console.log("down");
+            if (player.lastVel.x == 0 && player.lastVel.y == -1) return;
+            player.vel = {x: 0, y: 1};
+            player.lastVel = player.vel;
+            break;
         }
         case 80: { //space
-            return {x: 0, y: 0};
+            if (player.vel.x != 0 || player.vel.y != 0) {
+                player.lastVel = player.vel;
+            }
+            player.vel = {x: 0, y: 0};
+            break;
         }
     }
 }

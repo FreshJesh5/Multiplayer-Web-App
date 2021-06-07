@@ -29,7 +29,7 @@ const io = require('socket.io')(server, {
 
 
 
-const { initGame, gameLoop, getUpdatedVelocity, createGameState } = require('./game');
+const { initGame, gameLoop, updateVelocity, createGameState } = require('./game');
 const { FRAME_RATE, MAX_PLAYERS } = require('./constants');
 const { makeid } = require('./utils');
 
@@ -56,7 +56,7 @@ io.on('connection', client => {
         } else if (numClients > MAX_PLAYERS-1) {
             client.emit('tooManyPlayers');
             return;
-        } else if (state[roomName] && state[roomName].active) {
+        } else if (state[roomName]) {
             client.emit('gameInSession');
             return;
         }
@@ -68,7 +68,7 @@ io.on('connection', client => {
         //show blank game screen
         client.emit('init', numClients+1);
         //allow client to draw starting position
-        io.sockets.in(roomName).emit('gameActive', numClients+1);
+        io.sockets.in(roomName).emit('allowDrawCanvas', numClients+1);
         //send starting position
         io.sockets.in(roomName).emit('gameState', JSON.stringify(createGameState(numClients+1)));
     }
@@ -82,7 +82,7 @@ io.on('connection', client => {
         client.number = 1;
         //show blank game screen
         client.emit('init', 1);
-        client.emit('gameActive', 1);
+        client.emit('allowDrawCanvas', 1);
         client.emit('gameState', JSON.stringify(createGameState(1)));
     }
 
@@ -91,17 +91,25 @@ io.on('connection', client => {
         //console.log(io.sockets.adapter.rooms);
         const room = io.sockets.adapter.rooms.get(roomName);
         const numClients = room ? room.size : 0;
-        io.sockets.in(roomName).emit('gameActive', numClients);
+        io.sockets.in(roomName).emit('allowDrawCanvas', numClients);
         io.sockets.in(roomName).emit('gameStart', numClients);
-        if (state[roomName] && state[roomName] != null) {
+        
+        if (state[roomName] && state[roomName].active) {
             console.log("restarting game");
-            //console.log(state[roomName]);
+            //player disconnect check
+            if (state[roomName].numPlayers != numClients) {
+                io.sockets.in(roomName).emit('playerDisconnected');
+                return;
+            }
             state[roomName] = initGame(numClients);
         } else {
-            //create starting state and food
             console.log("starting game")
+            if (state[roomName] && state[roomName].numPlayers != numClients) {
+                io.sockets.in(roomName).emit('playerDisconnected');
+                return;
+            }
             state[roomName] = initGame(numClients);
-            //start game loop
+            //start game interval
             startGameInterval(roomName);
         }
         
@@ -132,10 +140,7 @@ io.on('connection', client => {
 
         let player = state[roomName].players[client.number-1];
         if (player) {
-            const vel = getUpdatedVelocity(keyCode, player);
-            if (vel && player.alive) {
-                player.vel = vel;
-            }
+            updateVelocity(keyCode, player, client.number);
         }
 
 
@@ -149,7 +154,7 @@ function startGameInterval(roomName) {
             emitGameState(roomName, state[roomName]);
         } else {
             emitGameOver(roomName, winner);
-            state[roomName] = null;
+            state[roomName].active = false;
             clearInterval(intervalId);
         }
     }, 1000 / FRAME_RATE);
