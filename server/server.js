@@ -92,6 +92,7 @@ io.on('connection', client => {
         const room = io.sockets.adapter.rooms.get(roomName);
         const numClients = room ? room.size : 0;
         io.sockets.in(roomName).emit('gameActive', numClients);
+        io.sockets.in(roomName).emit('gameStart', numClients);
         if (state[roomName] && state[roomName] != null) {
             console.log("restarting game");
             //console.log(state[roomName]);
@@ -129,11 +130,15 @@ io.on('connection', client => {
             return;
         }
 
-        const vel = getUpdatedVelocity(keyCode);
         let player = state[roomName].players[client.number-1];
-        if (vel) {
-            player.vel = vel;
+        if (player) {
+            const vel = getUpdatedVelocity(keyCode, player);
+            if (vel && player.alive) {
+                player.vel = vel;
+            }
         }
+
+
     }
 });
 

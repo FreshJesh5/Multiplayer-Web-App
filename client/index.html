@@ -9,6 +9,9 @@
     #gameScreen {
       display: none;
     }
+    #initialScreen {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -44,7 +47,17 @@
             <p>Your player color is: </p>
             <div class="ml-1 color-box" id="colorBox"></div>
           </div>
-          <canvas id="canvas"></canvas>
+          <div class="position-relative">
+            <canvas id="canvas"></canvas>
+            <div class="ml-2" style="position: absolute; left: 100%; top: 0;">
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item">INSTRUCTIONS:</li>
+                <li class="list-group-item">Press Start Game to begin</li>
+                <li class="list-group-item">Movement: arrow keys</li>
+                <li class="list-group-item">Pause: p</li>
+              </ul>
+            </div>
+          </div>
           <button
             type="submit"
             class="mt-2 btn btn-success"

@@ -12,6 +12,7 @@ socket.on('unknownCode', handleUnknownCode);
 socket.on('tooManyPlayers', handleTooManyPlayers);
 socket.on('gameInSession', handleGameInSession);
 socket.on('gameActive', handleGameActive);
+socket.on('gameStart', handleGameStart);
 
 const gameScreen = document.querySelector('#gameScreen');
 const initialScreen = document.querySelector('#initialScreen');
@@ -45,7 +46,6 @@ function joinGame() {
 function startGame() {
     if (roomName) {
         socket.emit('startGame', roomName);
-        startGameBtn.innerText = "Restart";
     } else {
         alert("Invalid game code");
     }
@@ -69,10 +69,15 @@ function init() {
     document.addEventListener('keydown',keydown);
 }
 
+//gameActive bool for whether canvas can be drawn on
 function handleGameActive(numClients) {
     numPlayers = numClients;
     console.log(numPlayers);
     gameActive = true;
+}
+
+function handleGameStart() {
+    startGameBtn.innerText = "Restart";
 }
 
 function keydown(e) {
